@@ -1,0 +1,124 @@
+.orderForm {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+  }
+
+  #orderform{
+    display: none;
+    z-index: 999;
+  }
+
+  #volumeform{
+    display: none;
+    z-index: 999;
+  }
+  
+  .orderForm h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .orderForm label {
+    display: block;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: #555;
+  }
+  
+  .orderForm input, .orderForm select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    transition: border 0.3s ease-in-out;
+  }
+  
+  .orderForm input:focus, .orderForm select:focus {
+    border-color: #5cb85c;
+    outline: none;
+  }
+  
+  .orderButton {
+    width: 100%;
+    padding: 15px;
+    background-color: #007bff;
+    color: #fff;
+    font-size: 1.2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .orderButton:hover {
+    background-color: #0056b3;
+  }
+  
+  .orderForm br {
+    display: none;
+  }
+  
+  @media (max-width: 768px) {
+    .orderForm {
+      padding: 20px;
+    }
+  
+    .orderForm h2 {
+      font-size: 1.5rem;
+    }
+  
+    .orderButton {
+      font-size: 1rem;
+    }
+  }
+  
+  .closeButton {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s ease-in-out;
+    padding: 0;
+  }
+  
+  .closeButton:hover {
+    color: #ff4d4d;
+  }
+  
+  .orderForm {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+    position: relative;
+  }
+  
+  
+  .error-message {
+    color: red;
+    font-weight: bold;
+}
+
+.success-message {
+    color: green;
+    font-weight: bold;
+}

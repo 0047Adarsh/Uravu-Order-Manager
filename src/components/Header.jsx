@@ -1,13 +1,26 @@
-import React from "react";
+import React, { useState } from "react";
+import AddOrder from './AddOrder';
 import '../styles/header.css';
 
 function Header()
 {
+    const [showOrderForm, setShowOrderForm] = useState(false);
+
+    function handleAddOrder()
+    {
+        document.getElementById("orderform").style.display = "block";
+    }
+
+    function handleAddVolume()
+    {
+        document.getElementById("volumeform").style.display = "block";
+    }
+
     return(
         <header>
             <div className="headerButtons">
-                <button>Add Volume</button>
-                <button>Add New Order</button>
+                <button onClick={handleAddVolume}>Add Volume</button>
+                <button onClick={handleAddOrder}>Add New Order</button>
             </div>
             <h1>Uravu Order Manager</h1>
         </header>
