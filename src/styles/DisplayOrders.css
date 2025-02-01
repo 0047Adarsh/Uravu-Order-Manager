@@ -1,0 +1,113 @@
+/* Resetting default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Body and container styles */
+  body {
+    background-color: #f4f7fa;
+    color: #333;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  /* Header section */
+  h1 {
+    text-align: center;
+    color: #333;
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+  }
+  
+  /* Production date and volume section */
+  .production-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .production-card h2 {
+    font-size: 1.8rem;
+    color: #1f3c73;
+    margin-bottom: 10px;
+  }
+  
+  .production-card h3 {
+    font-size: 1.4rem;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  
+  .production-card ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .production-card ul li {
+    font-size: 1.1rem;
+    color: #555;
+    margin: 5px 0;
+  }
+  
+  /* Orders section */
+  .order-list {
+    margin-top: 20px;
+  }
+  
+  .order-list p {
+    font-size: 1.1rem;
+    color: #777;
+  }
+  
+  .order-list li {
+    font-size: 1.2rem;
+    padding: 10px;
+    background-color: #e7f1ff;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .order-list li:hover {
+    background-color: #cce4ff;
+  }
+  
+  .order-list li span {
+    font-weight: bold;
+    color: #1f3c73;
+  }
+  
+  /* Responsive styling */
+  @media screen and (max-width: 768px) {
+    h1 {
+      font-size: 2rem;
+    }
+  
+    .production-card {
+      padding: 15px;
+    }
+  
+    .production-card h2 {
+      font-size: 1.6rem;
+    }
+  
+    .production-card h3 {
+      font-size: 1.2rem;
+    }
+  
+    .order-list li {
+      font-size: 1rem;
+    }
+  }
+  

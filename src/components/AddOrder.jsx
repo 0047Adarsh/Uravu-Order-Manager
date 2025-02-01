@@ -33,7 +33,7 @@ function AddOrder()
 
     function closeForm()
     {
-        document.getElementById("orderform").style.display = "none";
+        document.getElementById("dataForm").style.display = "none";
     }
 
     return(

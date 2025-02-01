@@ -1,48 +1,106 @@
-/* order-manager/src/components/VolumeForm.css */
-.container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+*{
+    margin: 0px;
+    padding: 0px;
 }
 
-h1 {
-    text-align: center;
-    color: #333;
+body{
+    font-family: Arial, sans-serif;
 }
 
-form {
+.dataForm{
+    width: 400px;
+    border-radius: 10px;
+    padding: 30px;
+    /* display: flex;
+    flex-direction: column; */
+    justify-self:center;
+    /* align-items: center; */
+    background-color: #f4f4f4;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+#volumeForm
+{
+    display: none;
+}
+
+#orderForm{
+    display: none;
+    width: 500px;
+}
+
+form{
     display: flex;
     flex-direction: column;
 }
 
-input[type="date"],
-input[type="number"] {
-    padding: 10px;
-    margin: 10px 0;
+.dataForm h1{
+    color: black;
+    margin-bottom: 10px;
+    text-align: center;
+
+}
+
+.theForm input, .theForm select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
     border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-}
+    border-radius: 8px;
+    margin-top: 8px;
+    box-sizing: border-box;
+    transition: border 0.2s ease-in-out;
+  }
 
-input[type="date"]:focus,
-input[type="number"]:focus {
-    border-color: #007bff;
+  .theForm input:focus, .theForm select:focus {
+    border-color: #5cb85c;
     outline: none;
-}
+  }
 
-button {
-    padding: 10px;
+  .theForm button {
+    width: 100%;
+    padding: 15px;
     background-color: #007bff;
-    color: white;
+    color: #fff;
+    font-size: 1.2rem;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 16px;
-}
+    transition: background-color 0.2s ease-in-out;
+    margin-top: 20px;
+  }
 
-button:hover {
+  .theForm button:hover{
     background-color: #0056b3;
-}
+  }
+
+  .dataForm .closeFormButton
+  {
+    border: 0px;
+    background-color: transparent;
+    color: black;
+    font-size: 1.3rem;
+  }
+
+  .closeFormButton:hover
+  {
+    color: red;
+  }
+
+  .theForm label {
+    display: block;
+    margin-top: 20px;
+    font-size: 1rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .theForm svg {
+    font-size: 1.3rem; 
+    color: black
+  }
+  

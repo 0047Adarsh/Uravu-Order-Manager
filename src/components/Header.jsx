@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import AddOrder from './AddOrder';
 import '../styles/header.css';
+import WaterDropIcon from '@mui/icons-material/WaterDrop';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+
 
 function Header()
 {
@@ -8,19 +11,19 @@ function Header()
 
     function handleAddOrder()
     {
-        document.getElementById("orderform").style.display = "block";
+        document.getElementById("orderForm").style.display = "block";
     }
 
     function handleAddVolume()
     {
-        document.getElementById("volumeform").style.display = "block";
+        document.getElementById("volumeForm").style.display = "block";
     }
 
     return(
         <header>
             <div className="headerButtons">
-                <button onClick={handleAddVolume}>Add Volume</button>
-                <button onClick={handleAddOrder}>Add New Order</button>
+                <button onClick={handleAddVolume}><WaterDropIcon/>Add Volume</button>
+                <button onClick={handleAddOrder}><ListAltIcon/>Add New Order</button>
             </div>
             <h1>Uravu Order Manager</h1>
         </header>
