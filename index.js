@@ -38,7 +38,6 @@ async function connectToDatabase() {
 
 connectToDatabase();
 
-// Get production data
 app.get("/productiondata", async (req, res) => {
   try {
     const result = await pool.query(`SELECT * FROM productiondata`);
@@ -49,14 +48,31 @@ app.get("/productiondata", async (req, res) => {
   }
 });
 
-// Get orders for a specific date
+// app.get("/orders/:date", async (req, res) => {
+//   const { date } = req.params;
+
+//   try {
+//     const result = await pool.query(
+//       `SELECT * FROM orderdata WHERE order_date = $1`,
+//       [date]
+//     );
+//     res.status(200).json({ data: result.rows });
+//   } catch (err) {
+//     console.error("Error fetching order data:", err);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
 app.get("/orders/:date", async (req, res) => {
   const { date } = req.params;
 
   try {
+    // Convert the provided date to a UTC format before querying
+    const utcDate = new Date(date).toISOString().split('T')[0]; // Convert to YYYY-MM-DD format (UTC)
+
     const result = await pool.query(
-      `SELECT * FROM orderdata WHERE order_date = $1`,
-      [date]
+      `SELECT * FROM orderdata WHERE order_date::date = $1`, // Ensure we are comparing the DATE part only
+      [utcDate]
     );
     res.status(200).json({ data: result.rows });
   } catch (err) {
@@ -121,6 +137,48 @@ app.post("/order", async (req, res) => {
   catch (err) {
     console.error("Error inserting order data:", err);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.put("/order/:id", async (req, res) => {
+  const { id } = req.params;
+  const { customerName, capColor, volume, quantity, totalVolume } = req.body;
+
+  try {
+    const result = await pool.query(
+      `UPDATE orderdata SET customer_name = $1, cap_color = $2, volume = $3, quantity = $4, total_volume = $5 WHERE id = $6 RETURNING *`,
+      [customerName, capColor, volume, quantity, totalVolume, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.status(200).json({ message: 'Order updated successfully', data: result.rows[0] });
+  } catch (err) {
+    console.error("Error updating order:", err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Delete order route (no authentication required)
+app.delete("/order/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM orderdata WHERE id = $1 RETURNING *`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.status(200).json({ message: 'Order deleted successfully' });
+  } catch (err) {
+    console.error("Error deleting order:", err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
