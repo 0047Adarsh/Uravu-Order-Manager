@@ -1,94 +1,90 @@
-import React, {useState, useEffect} from "react";
-import '../styles/addorder.css';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import "../styles/addorder.css";
 
-function AddOrder()
-{
-    const [name, setName] = useState("");
-    const [volume, setVolume] = useState(0);
+function AddOrder() {
+    const [customers, setCustomers] = useState([]);
+    const [selectedCustomer, setSelectedCustomer] = useState("");
+    const [volumes, setVolumes] = useState([]);
+    const [selectedVolume, setSelectedVolume] = useState(0);
     const [quantity, setQuantity] = useState(0);
     const [totalVolume, setTotalVolume] = useState(0);
-    const [orderDate, setOrderDate] = useState();
+    const [orderDate, setOrderDate] = useState("");
 
-    useEffect(()=>{
-            const today = new Date().toISOString().split("T")[0];
-            setOrderDate(today);
-    },[])
+    useEffect(() => {
+        const today = new Date().toISOString().split("T")[0];
+        setOrderDate(today);
 
-    function handleNameChange(e)
-    {
-        setName(e.target.value);
+        axios.get("http://localhost:3000/customers")
+            .then(response => {
+                setCustomers(response.data);
+            })
+            .catch(error => {
+                console.error("Error fetching customers:", error);
+            });
+    }, []);
+
+    function handleCustomerChange(e) {
+        const customerName = e.target.value;
+        setSelectedCustomer(customerName);
+
+        const customerData = customers.find(c => c.name === customerName);
+        setVolumes(customerData ? customerData.volumes : []);
     }
 
-    function handleVolumeChange(e)
-    {
-        setVolume(e.target.volume);
+    function handleVolumeChange(e) {
+        setSelectedVolume(parseFloat(e.target.value));
     }
-    
-    function handleQuantityChange(e)
-    {
-        const quantityValue = e.target.value;
+
+    function handleQuantityChange(e) {
+        const quantityValue = parseInt(e.target.value) || 0;
         setQuantity(quantityValue);
-        setTotalVolume(quantityValue * volume);
+        setTotalVolume(quantityValue * selectedVolume);
     }
 
-    function closeForm()
-    {
-        document.getElementById("dataForm").style.display = "none";
+    function closeForm() {
+        document.getElementById("orderform").style.display = "none";
     }
 
-    return(
+    return (
         <div className="orderForm" id="orderform">
             <button className="closeButton" onClick={closeForm}>X</button>
             <h1>Order Form</h1>
-            <form >
-                <label>
-                    Order Date:
-                </label>
-                    <input type="date" name="orderDate" value={orderDate}/>
-                    <br/>
-                <label>
-                    Client Name:
-                    <select value={name} onChange={handleNameChange}>
-                        <option>Select a Customer</option>
-                        <option>Leela</option>
-                        <option>GCBC</option>
-                    </select>
-                </label>
-                <br />
-                <label>
-                    Volume (L):
-                    <select value={volume} onChange={handleVolumeChange}>
-                        <option>Select Volume</option>
-                        <option value={0.25}>250mL</option>
-                        <option value={0.5}>500mL</option>
-                        <option value={0.75}>750mL</option>
-                    </select>          
-                </label>
-                <br />
-                <label>
-                    Quantity:
-                    <input
-                        type="number"
-                        value={quantity}
-                        onChange={handleQuantityChange}
-                        required
-                    />
-                </label>
-                <br />
-                <label>
-                    Volume Required:
-                    <input
-                        type="number"
-                        value={totalVolume}
-                        readOnly
-                    />
-                </label>
+            <form>
+                <label>Order Date:</label>
+                <input type="date" name="orderDate" value={orderDate} readOnly />
                 <br />
 
-                <button className='orderButton' type="submit">Add Order</button>
+                <label>Client Name:</label>
+                <select value={selectedCustomer} onChange={handleCustomerChange}>
+                    <option>Select a Customer</option>
+                    {customers.map((customer) => (
+                        <option key={customer.id} value={customer.name}>{customer.name}</option>
+                    ))}
+                </select>
+                <br />
+
+                <label>Volume (L):</label>
+                <select value={selectedVolume} onChange={handleVolumeChange} disabled={!volumes.length}>
+                    <option>Select Volume</option>
+                    {volumes.map((vol, index) => (
+                        <option key={index} value={vol}>{vol} L</option>
+                    ))}
+                </select>
+                <br />
+
+                <label>Quantity:</label>
+                <input type="number" value={quantity} onChange={handleQuantityChange} required />
+                <br />
+
+                <label>Volume Required:</label>
+                <input type="number" value={totalVolume} readOnly />
+                <br />
+
+                <button className="orderButton" type="submit">Add Order</button>
             </form>
         </div>
-    )
+    );
 }
 
 export default AddOrder;

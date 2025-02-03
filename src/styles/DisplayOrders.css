@@ -310,3 +310,25 @@ button:hover {
 .btn-split:hover {
   background-color: #fb8c00;
 }
+
+/* Highlight the row when editing */
+tr.editing {
+    background-color: #f5f5f5; /* Light gray background */
+    border-left: 5px solid #007bff; /* Blue left border */
+  }
+  
+  /* Optional: style the input fields in the editing mode */
+  tr.editing input,
+  tr.editing select {
+    background-color: #e7f0f7; /* Light blue background for inputs */
+    border: 0px solid #007bff; /* Blue border for inputs */
+    color: #333; /* Dark text for better contrast */
+    padding: 10px;
+  }
+  
+  /* Optional: style the buttons in the editing mode */
+  tr.editing .btn {
+    background-color: #007bff; /* Blue background for buttons */
+    color: white; /* White text on buttons */
+  }
+  

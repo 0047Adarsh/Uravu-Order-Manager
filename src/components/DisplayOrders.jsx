@@ -1,30 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import moment from 'moment'; // Moment to format date
-import "../styles/DisplayOrders.css"; // Assuming your CSS is here
+import moment from 'moment';
+import "../styles/DisplayOrders.css";
 
 const ProductionOrders = () => {
   const [productionData, setProductionData] = useState([]);
   const [ordersByDate, setOrdersByDate] = useState({});
   const [loading, setLoading] = useState(true);
+  
+  const customers = ["Customer A", "Customer B", "Customer C"];
+  const volumes = [100, 200, 300, 400]; 
+    
 
-  // Fetch production data on component mount
-  // useEffect(() => {
-  //   axios.get('http://localhost:3000/productiondata')
-  //     .then((response) => {
-  //       setProductionData(response.data.data);
-  //       setLoading(false);
-  //     })
-  //     .catch((error) => {
-  //       console.error('Error fetching production data:', error);
-  //       setLoading(false);
-  //     });
-  // }, []);
 
   useEffect(() => {
     axios.get('http://localhost:3000/productiondata')
       .then((response) => {
-        const sortedData = response.data.data.sort((a, b) => 
+        const sortedData = response.data.data.sort((a, b) =>
           moment(b.production_date).isBefore(moment(a.production_date)) ? 1 : -1
         );
         setProductionData(sortedData);
@@ -35,16 +27,13 @@ const ProductionOrders = () => {
         setLoading(false);
       });
   }, []);
-  
 
-  // Fetch orders for a specific production date
   const getOrdersForDate = (productionDate) => {
-    // Ensure we're comparing dates without time part
     const formattedDate = moment(productionDate).format('YYYY-MM-DD');
 
     return axios.get(`http://localhost:3000/orders/${formattedDate}`)
       .then((response) => {
-        return response.data; // Returning both orders and total volume
+        return response.data;
       })
       .catch((error) => {
         console.error('Error fetching order data:', error);
@@ -52,12 +41,10 @@ const ProductionOrders = () => {
       });
   };
 
-  // Group orders by production date
   useEffect(() => {
     const fetchOrders = async () => {
       let ordersGrouped = {};
 
-      // Loop through each production date and fetch the corresponding orders
       for (let data of productionData) {
         const ordersData = await getOrdersForDate(data.production_date);
         ordersGrouped[data.production_date] = ordersData;
@@ -71,62 +58,104 @@ const ProductionOrders = () => {
     }
   }, [loading, productionData]);
 
-  // Function to format date using moment.js (handling UTC and converting to local time)
-  const formatDate = (date) => {
-    // Ensure we're parsing in UTC and formatting as YYYY-MM-DD (no time), converted to local time
-    return moment.utc(date).local().format('YYYY-MM-DD');
+  const [editingOrderId, setEditingOrderId] = useState(null);
+  const [editedOrderData, setEditedOrderData] = useState({});
+
+  const handleEdit = (orderId, order) => {
+    setEditingOrderId(orderId);
+    setEditedOrderData({ ...order });
   };
 
-  // Function to determine if an order can be filled
-  const canOrderBeFilled = (orderTotalVolume, productionVolume) => {
-    return productionVolume >= orderTotalVolume;
-  };
+  const handleSave = async (orderId) => {
+    try {
+      const response = await axios.put(`http://localhost:3000/orders/${orderId}`, editedOrderData);
+      
+      if (response.status === 200) {
+        alert(`Order ${orderId} updated successfully`);
 
-  // Function to calculate remaining volume after fulfilling orders
-  const calculateRemainingVolume = (orders, productionVolume) => {
-    let remainingVolume = productionVolume;
+        setOrdersByDate((prevOrders) => {
+          const updatedOrders = { ...prevOrders };
+          updatedOrders[editedOrderData.production_date].data = updatedOrders[editedOrderData.production_date].data.map(order =>
+            order.id === orderId ? { ...order, ...editedOrderData } : order
+          );
+          return updatedOrders;
+        });
 
-    // Subtract the total volume of the orders that can be fulfilled
-    orders.forEach((order) => {
-      if (canOrderBeFilled(order.total_volume, remainingVolume)) {
-        remainingVolume -= order.total_volume; // Subtract the total volume
+        setEditingOrderId(null);
       }
+    } catch (error) {
+      console.error(`Error updating order ${orderId}:`, error);
+      alert('Failed to update the order. Please try again.');
+    }
+  };
+
+  const handleDelete = async (orderId) => {
+    try {
+      const response = await axios.delete(`http://localhost:3000/orders/${orderId}`);
+      
+      if (response.status === 200) {
+        alert(`Order ${orderId} deleted successfully`);
+  
+        // Remove the deleted order from the state
+        setOrdersByDate((prevOrders) => {
+          const updatedOrders = { ...prevOrders };
+  
+          // Filter out the deleted order
+          for (const date in updatedOrders) {
+            updatedOrders[date].data = updatedOrders[date].data.filter(
+              (order) => order.id !== orderId
+            );
+          }
+  
+          return updatedOrders;
+        });
+      }
+    } catch (error) {
+      console.error(`Error deleting order ${orderId}:`, error);
+      alert('Failed to delete the order. Please try again.');
+    }
+  };
+  
+
+  const handleCancel = () => {
+    setEditingOrderId(null);
+  };
+
+//   const handleChange = (e, field) => {
+//     setEditedOrderData((prevData) => ({
+//       ...prevData,
+//       [field]: e.target.value,
+//     }));
+//   };
+
+  const handleChange = (e, field) => {
+    const value = e.target.value;
+  
+    setEditedOrderData((prevData) => {
+      const updatedData = { ...prevData, [field]: value };
+  
+      if (field === "quantity" || field === "volume") {
+        const quantity = Number(updatedData.quantity) || 0;
+        const volume = Number(updatedData.volume) || 0;
+        updatedData.total_volume = quantity * volume;
+      }
+  
+      return updatedData;
     });
-
-    return remainingVolume;
   };
-
-  // Handle button actions (placeholders for now)
-  const handleEdit = (orderId) => {
-    console.log(`Edit Order: ${orderId}`);
-    // Logic for editing the order
-  };
-
-  const handleDelete = (orderId) => {
-    console.log(`Delete Order: ${orderId}`);
-    // Logic for deleting the order
-  };
-
-  const handleSplit = (orderId) => {
-    console.log(`Split Order: ${orderId}`);
-    // Logic for splitting the order
-  };
+  
 
   return (
     <div className="container">
       <h1>Production Volume and Orders</h1>
 
       {productionData.map((data) => {
-        // Get the orders for this production date
         const { data: orders } = ordersByDate[data.production_date] || { data: [] };
-
-        // Calculate the remaining volume after fulfilling orders
-        const remainingVolume = calculateRemainingVolume(orders, data.production_volume);
 
         return (
           <div key={data.production_date} className="production-card">
             <div className="card-header">
-              <h2>Production Date: {formatDate(data.production_date)} | Production Volume: {data.production_volume} Lts</h2>
+              <h2>Production Date: {moment(data.production_date).format('YYYY-MM-DD')} | Production Volume: {data.production_volume} Lts</h2>
             </div>
 
             <h3>Orders:</h3>
@@ -146,21 +175,63 @@ const ProductionOrders = () => {
                 <tbody>
                   {orders && orders.length > 0 ? (
                     orders.map((order, index) => {
-                      const isFulfilled = canOrderBeFilled(order.total_volume, data.production_volume);
-                      const orderStatusClass = isFulfilled ? 'fulfilled' : 'not-fulfilled'; // CSS class for coloring
+                      const isEditing = editingOrderId === order.id;
 
                       return (
-                        <tr key={index} className={orderStatusClass}>
+                        // <tr key={order.id}>
+                        <tr key={order.id} className={isEditing ? 'editing' : ''}>
+
                           <td>{index + 1}</td>
-                          <td>{order.customer_name}</td>
-                          <td>{order.volume}</td>
-                          <td>{order.quantity}</td>
-                          <td>{order.total_volume}</td>
-                          <td>{isFulfilled ? 'Can be Fulfilled' : 'Cannot be Fulfilled'}</td>
+                          <td>{isEditing ? (
+                            <select
+                              value={editedOrderData.customer_name || ''}
+                              onChange={(e) => handleChange(e, 'customer_name')}
+                            >
+                              <option value="">Select Customer</option>
+                              {customers.map((customer, idx) => (
+                                <option key={idx} value={customer}>{customer}</option>
+                              ))}
+                            </select>
+                          ) : order.customer_name}</td>
+                          <td>{isEditing ? (
+                            <select
+                              value={editedOrderData.volume || ''}
+                              onChange={(e) => handleChange(e, 'volume')}
+                            >
+                              <option value="">Select Volume</option>
+                              {volumes.map((volume, idx) => (
+                                <option key={idx} value={volume}>{volume} L</option>
+                              ))}
+                            </select>
+                          ) : order.volume}</td>
+                          <td>{isEditing ? (
+                            <input
+                              type="number"
+                              value={editedOrderData.quantity || ''}
+                              onChange={(e) => handleChange(e, 'quantity')}
+                            />
+                          ) : order.quantity}</td>
+                          <td>{isEditing ? (
+                            <input
+                              type="number"
+                              value={editedOrderData.total_volume || ''}
+                              onChange={(e) => handleChange(e, 'total_volume')}
+                              readOnly/>
+                          ) : order.total_volume}</td>
+                          <td>{isEditing ? 'Editing...' : 'Can be Fulfilled'}</td>
                           <td>
-                            <button onClick={() => handleEdit(order.id)} className="btn btn-edit">Edit</button>
-                            <button onClick={() => handleDelete(order.id)} className="btn btn-delete">Delete</button>
-                            <button onClick={() => handleSplit(order.id)} className="btn btn-split">Split</button>
+                            {isEditing ? (
+                              <>
+                                <button onClick={() => handleSave(order.id)} className="btn btn-save">Save</button>
+                                <button onClick={handleCancel} className="btn btn-cancel">Cancel</button>
+                              </>
+                            ) : (
+                              <>
+                                <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit">Edit</button>
+                                <button onClick={() => handleDelete(order.id)} className="btn btn-delete">Delete</button>
+                                <button onClick={() => handleSplit(order.id)} className="btn btn-split">Split</button>
+                              </>
+                            )}
                           </td>
                         </tr>
                       );
@@ -172,11 +243,6 @@ const ProductionOrders = () => {
                   )}
                 </tbody>
               </table>
-            </div>
-
-            {/* Display remaining water volume at the bottom of the card */}
-            <div className="remaining-volume">
-              <p><strong>Remaining Volume:</strong> {remainingVolume} Lts</p>
             </div>
           </div>
         );

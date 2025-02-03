@@ -81,6 +81,28 @@ app.get("/orders/:date", async (req, res) => {
   }
 });
 
+app.get('/customers', async (req, res) => {
+  try {
+      const customers = await pool.query('SELECT * FROM customers');
+      res.json(customers.rows);
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
+  }
+});
+
+app.get('/volumes/:customerId', async (req, res) => {
+  const { customerId } = req.params;
+  try {
+      const volumes = await pool.query('SELECT volume FROM customer_volumes WHERE customer_id = $1', [customerId]);
+      res.json(volumes.rows);
+  } catch (error) {
+      console.error(error);
+      res.status(500).send('Server error');
+  }
+});
+
+
 
 app.post("/volume", async (req, res) => {
   const { productionDate, productionVolume } = req.body;
@@ -140,14 +162,15 @@ app.post("/order", async (req, res) => {
   }
 });
 
-app.put("/order/:id", async (req, res) => {
+app.put("/orders/:id", async (req, res) => {
   const { id } = req.params;
-  const { customerName, capColor, volume, quantity, totalVolume } = req.body;
+  console.log(req.body);
+  const { customer_name, capColor, volume, quantity, total_volume } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE orderdata SET customer_name = $1, cap_color = $2, volume = $3, quantity = $4, total_volume = $5 WHERE id = $6 RETURNING *`,
-      [customerName, capColor, volume, quantity, totalVolume, id]
+      [customer_name, "Orange", volume, quantity, total_volume, id]
     );
 
     if (result.rows.length === 0) {
@@ -161,24 +184,39 @@ app.put("/order/:id", async (req, res) => {
   }
 });
 
-// Delete order route (no authentication required)
-app.delete("/order/:id", async (req, res) => {
-  const { id } = req.params;
+// app.delete("/order/:id", async (req, res) => {
+//   const { id } = req.params;
 
+//   try {
+//     const result = await pool.query(
+//       `DELETE FROM orderdata WHERE id = $1 RETURNING *`,
+//       [id]
+//     );
+
+//     if (result.rows.length === 0) {
+//       return res.status(404).json({ message: 'Order not found' });
+//     }
+
+//     res.status(200).json({ message: 'Order deleted successfully' });
+//   } catch (err) {
+//     console.error("Error deleting order:", err);
+//     res.status(500).json({ message: 'Internal server error' });
+//   }
+// });
+
+app.delete('/orders/:orderId', async (req, res) => {
+  const { orderId } = req.params;
   try {
-    const result = await pool.query(
-      `DELETE FROM orderdata WHERE id = $1 RETURNING *`,
-      [id]
-    );
+    const result = await pool.query('DELETE FROM orderdata WHERE id = $1 RETURNING *', [orderId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    res.status(200).json({ message: 'Order deleted successfully' });
-  } catch (err) {
-    console.error("Error deleting order:", err);
-    res.status(500).json({ message: 'Internal server error' });
+    res.json({ message: `Order ${orderId} deleted successfully` });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).send('Internal Server Error');
   }
 });
 
