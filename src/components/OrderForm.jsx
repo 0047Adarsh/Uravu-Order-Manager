@@ -8,21 +8,46 @@ import ProductionQuantityLimitsIcon from '@mui/icons-material/ProductionQuantity
 function OrderForm() {
   const [orderData, setOrderData] = useState({
     orderDate: new Date().toISOString().split("T")[0],
+    customerId: "",  // Now using customerId
     customerName: "",
-    capColor:"",
+    capColor: "",
     volume: 0,
     quantity: 0,
     totalVolume: 0,
   });
 
-const [error, setError] = useState(null);
-const [successMessage, setSuccessMessage] = useState("");
+  const [customers, setCustomers] = useState([]);
+  const [volumes, setVolumes] = useState([]);
+  const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState("");
 
+  // Fetch the customer list when the component mounts
+  useEffect(() => {
+    fetch('http://localhost:3000/customers')
+      .then(response => response.json())
+      .then(data => setCustomers(data))
+      .catch(error => setError("Failed to load customers"));
+  }, []);
+
+  // Fetch the available volumes for the selected customer by customerId
+  useEffect(() => {
+    if (orderData.customerId) {  // Use customerId here
+      fetch(`http://localhost:3000/volumes/${orderData.customerId}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log("Fetched volumes for customer:", data); // Debugging
+          setVolumes(data.map(volume => volume.volume));
+        })
+        .catch(error => setError("Failed to load volumes"));
+    }
+  }, [orderData.customerId]);  // Dependency on customerId
+
+  // Update the total volume based on volume and quantity
   useEffect(() => {
     const total = orderData.volume * orderData.quantity;
     setOrderData(prevData => ({
       ...prevData,
-      totalVolume: total
+      totalVolume: total,
     }));
   }, [orderData.volume, orderData.quantity]);
 
@@ -30,47 +55,48 @@ const [successMessage, setSuccessMessage] = useState("");
     const { name, value } = e.target;
     setOrderData(prevData => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  function closeForm() {
+  const closeForm = () => {
     document.getElementById("orderForm").style.display = "none";
-  }
+  };
 
   const handleSubmit = (event) => {
     event.preventDefault();
-        setError(null);
-        setSuccessMessage("");
-        fetch('http://localhost:3000/order', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Success:', data);
-            setOrderData(prevData => ({
-                ...prevData,
-                customerName: "",
-                capColor:"",
-                volume: 0,
-                quantity: 0,
-                totalVolume: 0
-            }));
-            setSuccessMessage("Order data submitted successfully!");
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            setError('Submission failed. Please try again.');
+    setError(null);
+    setSuccessMessage("");
+    fetch('http://localhost:3000/order', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData),
+    })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Success:', data);
+        setOrderData({
+          orderDate: new Date().toISOString().split("T")[0],
+          customerId: "",
+          customerName: "",
+          capColor: "",
+          volume: 0,
+          quantity: 0,
+          totalVolume: 0,
         });
+        setSuccessMessage("Order data submitted successfully!");
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        setError('Submission failed. Please try again.');
+      });
   };
 
   return (
@@ -80,32 +106,43 @@ const [successMessage, setSuccessMessage] = useState("");
       <form className="theForm" onSubmit={handleSubmit}>
         <div className="formGroup">
           <label><DateRangeIcon /> Order Date:</label>
-          <input 
-            type="date" 
-            name="orderDate" 
-            value={orderData.orderDate} 
-            onChange={handleInputChange} 
+          <input
+            type="date"
+            name="orderDate"
+            value={orderData.orderDate}
+            onChange={handleInputChange}
           />
         </div>
 
         <div className="formGroup">
           <label><PersonIcon /> Client Name:</label>
-          <select 
-            name="customerName" 
-            value={orderData.customerName} 
-            onChange={handleInputChange}
+          <select
+            name="customerId"
+            value={orderData.customerId}
+            onChange={(e) => {
+              const customerId = e.target.value;
+              const customerName = customers.find(customer => customer.id === customerId)?.name || "";
+              setOrderData(prevData => ({
+                ...prevData,
+                customerId,
+                customerName,
+              }));
+            }}
           >
             <option value="">Select a Customer</option>
-            <option value="Leela">Leela</option>
-            <option value="GCBC">GCBC</option>
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.name}
+              </option>
+            ))}
           </select>
         </div>
 
         <div className="formGroup">
           <label><PersonIcon /> Cap Color:</label>
-          <select 
-            name="capColor" 
-            value={orderData.capColor} 
+          <select
+            name="capColor"
+            value={orderData.capColor}
             onChange={handleInputChange}
           >
             <option value="">Select a Cap Color</option>
@@ -117,15 +154,17 @@ const [successMessage, setSuccessMessage] = useState("");
         <div className="formGroup">
           <label><ProductionQuantityLimitsIcon /> Volume (L):</label>
           <select
-            name="volume" 
-            value={orderData.volume} 
+            name="volume"
+            value={orderData.volume}
             onChange={handleInputChange}
             required
           >
             <option value={0}>Select Volume</option>
-            <option value={0.25}>250mL</option>
-            <option value={0.5}>500mL</option>
-            <option value={0.75}>750mL</option>
+            {volumes.map((volume, index) => (
+              <option key={index} value={volume/1000}>
+                {volume} mL
+              </option>
+            ))}
           </select>
         </div>
 
@@ -152,6 +191,9 @@ const [successMessage, setSuccessMessage] = useState("");
 
         <button className="orderButton" type="submit">Add Order</button>
       </form>
+
+      {error && <p className="error">{error}</p>}
+      {successMessage && <p className="success">{successMessage}</p>}
     </div>
   );
 }

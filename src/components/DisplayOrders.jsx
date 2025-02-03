@@ -89,6 +89,8 @@ const ProductionOrders = () => {
     }
   };
 
+  
+
   const handleDelete = async (orderId) => {
     try {
       const response = await axios.delete(`http://localhost:3000/orders/${orderId}`);
@@ -195,7 +197,7 @@ const ProductionOrders = () => {
                           ) : order.customer_name}</td>
                           <td>{isEditing ? (
                             <select
-                              value={editedOrderData.volume || ''}
+                              value={editedOrderData.volume|| ''}
                               onChange={(e) => handleChange(e, 'volume')}
                             >
                               <option value="">Select Volume</option>
@@ -203,7 +205,7 @@ const ProductionOrders = () => {
                                 <option key={idx} value={volume}>{volume} L</option>
                               ))}
                             </select>
-                          ) : order.volume}</td>
+                          ) : order.volume * 1000}</td>
                           <td>{isEditing ? (
                             <input
                               type="number"

@@ -141,26 +141,47 @@ app.post("/volume", async (req, res) => {
   }
 });
 
-app.post("/order", async (req, res) => {
-  const { orderDate, customerName, capColor, volume, quantity, totalVolume } = req.body;
+// app.post("/order", async (req, res) => {
+//   const { orderDate, customerName, capColor, volume, quantity, totalVolume } = req.body;
 
-  if (!orderDate || !customerName || !volume || !quantity || !totalVolume) {
-    return res.status(400).json({ message: "Missing required fields" });
+//   if (!orderDate || !customerName || !volume || !quantity || !totalVolume) {
+//     return res.status(400).json({ message: "Missing required fields" });
+//   }
+
+//   try {
+//   const result = await pool.query(
+//     `INSERT INTO orderdata (order_date, customer_name, volume, quantity, total_volume, cap_color) 
+//      VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+//     [orderDate, customerName, volume, quantity, totalVolume, capColor]
+//   );
+//   res.status(201).json({ message: "Order data added successfully", data: result.rows[0] });
+// } 
+//   catch (err) {
+//     console.error("Error inserting order data:", err);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+app.post('/order', async (req, res) => {
+  const { customerId,customerName, volume, quantity, totalVolume, orderDate, capColor } = req.body;
+  if (!customerId || !volume || !quantity || !totalVolume || !orderDate || !capColor) {
+    return res.status(400).json({ message: 'Missing required fields' });
   }
 
+  // Process the order data (e.g., insert into database)
   try {
-  const result = await pool.query(
-    `INSERT INTO orderdata (order_date, customer_name, volume, quantity, total_volume, cap_color) 
-     VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-    [orderDate, customerName, volume, quantity, totalVolume, capColor]
-  );
-  res.status(201).json({ message: "Order data added successfully", data: result.rows[0] });
-} 
-  catch (err) {
-    console.error("Error inserting order data:", err);
-    res.status(500).json({ message: "Internal server error" });
+    // Example: Insert order into the database (you'll adjust this as needed)
+    await pool.query(
+      'INSERT INTO orderData (customer_id, customer_name, volume, quantity, total_volume, order_date, cap_color) VALUES ($1, $2, $3, $4, $5, $6, $7)',
+      [customerId, customerName, volume, quantity, totalVolume, orderDate, capColor]
+    );
+    res.status(200).json({ message: 'Order created successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
+
 
 app.put("/orders/:id", async (req, res) => {
   const { id } = req.params;
