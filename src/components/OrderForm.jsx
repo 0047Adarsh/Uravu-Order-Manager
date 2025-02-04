@@ -8,7 +8,7 @@ import ProductionQuantityLimitsIcon from '@mui/icons-material/ProductionQuantity
 function OrderForm() {
   const [orderData, setOrderData] = useState({
     orderDate: new Date().toISOString().split("T")[0],
-    customerId: "",  // Now using customerId
+    customerId: "",
     customerName: "",
     capColor: "",
     volume: 0,
@@ -21,7 +21,6 @@ function OrderForm() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Fetch the customer list when the component mounts
   useEffect(() => {
     fetch('http://localhost:3000/customers')
       .then(response => response.json())
@@ -29,20 +28,18 @@ function OrderForm() {
       .catch(error => setError("Failed to load customers"));
   }, []);
 
-  // Fetch the available volumes for the selected customer by customerId
   useEffect(() => {
-    if (orderData.customerId) {  // Use customerId here
+    if (orderData.customerId) { 
       fetch(`http://localhost:3000/volumes/${orderData.customerId}`)
         .then(response => response.json())
         .then(data => {
-          console.log("Fetched volumes for customer:", data); // Debugging
+          console.log("Fetched volumes for customer:", data);
           setVolumes(data.map(volume => volume.volume));
         })
         .catch(error => setError("Failed to load volumes"));
     }
-  }, [orderData.customerId]);  // Dependency on customerId
+  }, [orderData.customerId]); 
 
-  // Update the total volume based on volume and quantity
   useEffect(() => {
     const total = orderData.volume * orderData.quantity;
     setOrderData(prevData => ({
@@ -67,6 +64,8 @@ function OrderForm() {
     event.preventDefault();
     setError(null);
     setSuccessMessage("");
+ 
+
     fetch('http://localhost:3000/order', {
       method: 'POST',
       headers: {
@@ -116,7 +115,7 @@ function OrderForm() {
 
         <div className="formGroup">
           <label><PersonIcon /> Client Name:</label>
-          <select
+          {/* <select
             name="customerId"
             value={orderData.customerId}
             onChange={(e) => {
@@ -135,8 +134,33 @@ function OrderForm() {
                 {customer.name}
               </option>
             ))}
+          </select> */}
+          <select
+            name="customerId"
+            value={orderData.customerId}
+            onChange={(e) => {
+              const customerId = e.target.value;
+              const customer = customers.find(customer => customer.id === customerId);
+              
+              setOrderData(prevData => ({
+                ...prevData,
+                customerId,
+                customerName: customer ? customer.name : "",
+              }));
+            }}
+          >
+            <option value="">Select a Customer</option>
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.name}
+              </option>
+            ))}
           </select>
+
         </div>
+
+        <input name="customerId" type="number" value={"0"} />
+
 
         <div className="formGroup">
           <label><PersonIcon /> Cap Color:</label>

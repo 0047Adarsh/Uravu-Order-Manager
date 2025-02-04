@@ -332,3 +332,143 @@ tr.editing {
     color: white; /* White text on buttons */
   }
   
+
+  .split-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .split-modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+  }
+  
+  .split-modal-content label {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  .split-modal-content input {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+  }
+
+
+  /* General Styling for the Edit Form */
+.edit-production-form {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Title for the Edit Form */
+  .edit-production-form h2 {
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  /* Styling for Form Labels */
+  .edit-production-form label {
+    display: block;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #555;
+  }
+  
+  /* Input Fields Styling */
+  .edit-production-form input,
+  .edit-production-form select,
+  .edit-production-form textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #333;
+    background-color: #fff;
+    transition: border-color 0.3s ease;
+  }
+  
+  /* Focus Effect for Input Fields */
+  .edit-production-form input:focus,
+  .edit-production-form select:focus,
+  .edit-production-form textarea:focus {
+    border-color: #4caf50;
+    outline: none;
+  }
+  
+  /* Submit Button Styling */
+  .edit-production-form button {
+    background-color: #4caf50;
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Button Hover Effect */
+  .edit-production-form button:hover {
+    background-color: #45a049;
+  }
+  
+  /* Error Message Styling */
+  .edit-production-form .error {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+  
+  /* Success Message Styling */
+  .edit-production-form .success {
+    color: green;
+    font-size: 14px;
+    margin-bottom: 15px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 600px) {
+    .edit-production-form {
+      padding: 15px;
+    }
+  
+    .edit-production-form h2 {
+      font-size: 20px;
+    }
+  
+    .edit-production-form label {
+      font-size: 14px;
+    }
+  
+    .edit-production-form input,
+    .edit-production-form select,
+    .edit-production-form textarea {
+      font-size: 14px;
+    }
+  
+    .edit-production-form button {
+      font-size: 14px;
+      padding: 8px 15px;
+    }
+  }
+  

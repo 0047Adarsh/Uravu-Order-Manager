@@ -257,6 +257,21 @@ const ProductionOrders = () => {
     setEditedProductionData((prevData) => ({ ...prevData, [field]: value }));
   };
 
+  const checkOrderFulfillment = (productionVolume, orders) => {
+    let remainingVolume = productionVolume;
+    return orders.map((order) => {
+      const canBeFilled = remainingVolume >= order.total_volume;
+      if (canBeFilled) {
+        remainingVolume -= order.total_volume;
+      }
+      return {
+        ...order,
+        status: canBeFilled ? 'Can be filled' : 'Cannot be filled',
+        rowColor: canBeFilled ? 'green' : 'red',
+      };
+    });
+  };
+
   return (
     <div className="container">
       <h1>Production Volume and Orders</h1>
@@ -294,6 +309,7 @@ const ProductionOrders = () => {
 
       {productionData.map((data) => {
         const { data: orders } = ordersByDate[data.production_date] || { data: [] };
+        const checkedOrders = checkOrderFulfillment(data.production_volume, orders);
 
         return (
           <div key={data.production_date} className="production-card">
@@ -347,13 +363,13 @@ const ProductionOrders = () => {
                 </thead>
                 <tbody>
                 {
-                    orders && orders.length > 0 ? ( 
-                    orders.map((order, index) => {
+                    checkedOrders && checkedOrders.length > 0 ? ( 
+                    checkedOrders.map((order, index) => {
                     const isEditing = editingOrderId === order.id;
                     
 
                       return (
-                        <tr key={order.id} className={isEditing ? 'editing' : ''}>
+                        <tr key={order.id} className={isEditing ? 'editing' : ''} style={{ backgroundColor: order.rowColor }}>
                           <td>{index + 1}</td>
                           <td>
                             {isEditing ? (
@@ -413,7 +429,7 @@ const ProductionOrders = () => {
                             )}
                           </td>
                 
-                          <td>{isEditing ? 'Editing...' : 'Not edited'}</td>
+                          <td>{order.status}</td>
                           <td>
                             {isEditing ? (
                               <>

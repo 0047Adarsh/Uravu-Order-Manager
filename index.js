@@ -163,17 +163,16 @@ app.post("/volume", async (req, res) => {
 // });
 
 app.post('/order', async (req, res) => {
+  console.log(req.body);
   const { customerId,customerName, volume, quantity, totalVolume, orderDate, capColor } = req.body;
   if (!customerId || !volume || !quantity || !totalVolume || !orderDate || !capColor) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
-  // Process the order data (e.g., insert into database)
   try {
-    // Example: Insert order into the database (you'll adjust this as needed)
     await pool.query(
-      'INSERT INTO orderData (customer_id, customer_name, volume, quantity, total_volume, order_date, cap_color) VALUES ($1, $2, $3, $4, $5, $6, $7)',
-      [customerId, customerName, volume, quantity, totalVolume, orderDate, capColor]
+      'INSERT INTO orderData (customer_name, volume, quantity, total_volume, order_date, cap_color) VALUES ($1, $2, $3, $4, $5, $6)',
+      [customerId, volume, quantity, totalVolume, orderDate, capColor]
     );
     res.status(200).json({ message: 'Order created successfully' });
   } catch (error) {
@@ -185,13 +184,12 @@ app.post('/order', async (req, res) => {
 
 app.put("/orders/:id", async (req, res) => {
   const { id } = req.params;
-  console.log(req.body);
   const { customer_name, capColor, volume, quantity, total_volume } = req.body;
 
   try {
     const result = await pool.query(
       `UPDATE orderdata SET customer_name = $1, cap_color = $2, volume = $3, quantity = $4, total_volume = $5 WHERE id = $6 RETURNING *`,
-      [customer_name, "Orange", volume, quantity, total_volume, id]
+      [customer_name, capColor, volume, quantity, total_volume, id]
     );
 
     if (result.rows.length === 0) {
@@ -199,6 +197,28 @@ app.put("/orders/:id", async (req, res) => {
     }
 
     res.status(200).json({ message: 'Order updated successfully', data: result.rows[0] });
+  } catch (err) {
+    console.error("Error updating order:", err);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+app.put('/productiondata/:productionId', async(req,res)=>{
+
+  const { productionId } = req.params;
+  const { production_volume} = req.body;
+  
+  try {
+    const result = await pool.query(
+      `UPDATE productiondata SET production_volume = $1 WHERE id = $2 RETURNING *`,
+      [production_volume, productionId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    res.status(200).json({ message: 'Production updated successfully', data: result.rows[0] });
   } catch (err) {
     console.error("Error updating order:", err);
     res.status(500).json({ message: 'Internal server error' });
@@ -240,6 +260,8 @@ app.delete('/orders/:orderId', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 app.listen(port, () => {
   console.log(`Server running on ${port}`);
