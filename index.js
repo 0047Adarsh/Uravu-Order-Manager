@@ -189,7 +189,7 @@ app.put("/orders/:id", async (req, res) => {
   try {
     const result = await pool.query(
       `UPDATE orderdata SET customer_name = $1, cap_color = $2, volume = $3, quantity = $4, total_volume = $5 WHERE id = $6 RETURNING *`,
-      [customer_name, capColor, volume, quantity, total_volume, id]
+      [customer_name, "capColor", volume, quantity, total_volume, id]
     );
 
     if (result.rows.length === 0) {
@@ -257,6 +257,23 @@ app.delete('/orders/:orderId', async (req, res) => {
     res.json({ message: `Order ${orderId} deleted successfully` });
   } catch (error) {
     console.error('Error deleting order:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+app.delete('/productiondata/:productionId', async (req, res) => {
+  const { productionId } = req.params;
+
+  try {
+    const result = await pool.query('DELETE FROM productiondata WHERE id = $1 RETURNING *', [productionId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Production data not found' });
+    }
+
+    res.json({ message: `Production data ${productionId} deleted successfully` });
+  } catch (error) {
+    console.error('Error deleting production data:', error);
     res.status(500).send('Internal Server Error');
   }
 });

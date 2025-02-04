@@ -257,6 +257,26 @@ const ProductionOrders = () => {
     setEditedProductionData((prevData) => ({ ...prevData, [field]: value }));
   };
 
+  const handleDeleteProduction = async (productionId) => {
+    try {
+      const response = await axios.delete(`http://localhost:3000/productiondata/${productionId}`);
+
+      if (response.status === 200) {
+        alert(`Production data ${productionId} deleted successfully`);
+
+        setProductionData((prevData) => prevData.filter((data) => data.id !== productionId));
+      }
+    } catch (error) {
+      console.error(`Error deleting production data ${productionId}:`, error);
+      alert('Failed to delete the production data. Please try again.');
+    }
+  };
+
+  const calculateOrderStatus = (order, remainingVolume) => {
+    console.log(`Order Quantity: ${order.quantity}, Remaining Volume: ${remainingVolume}`);
+    return order.quantity <= remainingVolume ? 'Can be filled' : 'Cannot be filled';
+  };
+
   return (
     <div className="container">
       <h1>Production Volume and Orders</h1>
@@ -295,6 +315,27 @@ const ProductionOrders = () => {
       {productionData.map((data) => {
         const { data: orders } = ordersByDate[data.production_date] || { data: [] };
 
+        // Ensure production_volume is a valid number
+        let productionVolume = Number(data.production_volume);
+        if (isNaN(productionVolume)) {
+          console.error(`Invalid production volume for date ${data.production_date}:`, data.production_volume);
+          productionVolume = 0; // Default to 0 if not a valid number
+        }
+
+        // Calculate total volume of orders for the current production date
+        const totalOrdersVolume = orders.reduce((total, order) => {
+          const orderTotalVolume = Number(order.total_volume);
+          if (isNaN(orderTotalVolume)) {
+            console.error(`Invalid total volume for order ID ${order.id}:`, order.total_volume);
+            return total; // Skip invalid total volumes
+          }
+          return total + orderTotalVolume;
+        }, 0);
+
+        // Update remaining volume
+        let remainingVolume = Math.max(0, productionVolume - totalOrdersVolume); // Ensure it doesn't go negative
+        console.log(`Production Volume: ${productionVolume}, Total Orders Volume: ${totalOrdersVolume}, Remaining Volume: ${remainingVolume}`);
+
         return (
           <div key={data.production_date} className="production-card">
             <div className="card-header">
@@ -312,9 +353,14 @@ const ProductionOrders = () => {
                   </button>
                 </>
               ) : (
-                <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit">
-                  Edit Production
-                </button>
+                <>
+                  <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit">
+                    Edit Production
+                  </button>
+                  <button onClick={() => handleDeleteProduction(data.id)} className="btn btn-delete">
+                    Delete Production
+                  </button>
+                </>
               )}
             </div>
 
@@ -349,8 +395,8 @@ const ProductionOrders = () => {
                 {
                     orders && orders.length > 0 ? ( 
                     orders.map((order, index) => {
-                    const isEditing = editingOrderId === order.id;
-                    
+                      const isEditing = editingOrderId === order.id;
+                      const orderStatus = calculateOrderStatus(order, remainingVolume); // Determine order status
 
                       return (
                         <tr key={order.id} className={isEditing ? 'editing' : ''}>
@@ -412,8 +458,7 @@ const ProductionOrders = () => {
                               order.total_volume
                             )}
                           </td>
-                
-                          <td>{isEditing ? 'Editing...' : 'Not edited'}</td>
+                          <td>{orderStatus}</td>
                           <td>
                             {isEditing ? (
                               <>
@@ -448,6 +493,11 @@ const ProductionOrders = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Display remaining volume */}
+            <div className="remaining-volume">
+              <h4>Remaining Volume: {remainingVolume} Lts</h4>
             </div>
           </div>
         );
