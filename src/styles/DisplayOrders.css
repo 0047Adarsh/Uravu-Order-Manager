@@ -212,7 +212,7 @@ button:hover {
 }
 
 .btn-edit {
-  background-color: #4caf50; /* Green */
+  background-color: #4caf50; 
   color: white;
 }
 
@@ -230,7 +230,7 @@ button:hover {
 }
 
 .btn-split {
-  background-color: #ff9800; /* Orange */
+  background-color: #ff9800;
   color: white;
 }
 
@@ -294,7 +294,7 @@ button:hover {
 }
 
 .btn-delete {
-  background-color: #f44336; /* Red */
+  background-color: #f44336;
   color: white;
 }
 
@@ -303,7 +303,7 @@ button:hover {
 }
 
 .btn-split {
-  background-color: #ff9800; /* Orange */
+  background-color: #ff9800;
   color: white;
 }
 
@@ -311,26 +311,23 @@ button:hover {
   background-color: #fb8c00;
 }
 
-/* Highlight the row when editing */
-tr.editing {
-    background-color: #f5f5f5; /* Light gray background */
-    border-left: 5px solid #007bff; /* Blue left border */
-  }
-  
-  /* Optional: style the input fields in the editing mode */
-  tr.editing input,
-  tr.editing select {
-    background-color: #e7f0f7; /* Light blue background for inputs */
-    border: 0px solid #007bff; /* Blue border for inputs */
-    color: #333; /* Dark text for better contrast */
+/* tr#editing {
+    background-color: #f5f5f5;
+    border-left: 5px solid #007bff;
+  } */
+
+  tr#editing input,
+  tr#editing select {
+    background-color: #e7f0f7;
+    border: 0px solid #007bff;
+    color: #333;
     padding: 10px;
   }
-  
-  /* Optional: style the buttons in the editing mode */
-  tr.editing .btn {
-    background-color: #007bff; /* Blue background for buttons */
-    color: white; /* White text on buttons */
-  }
+/*   
+  tr#editing .btn {
+    background-color: #007bff;
+    color: white;
+  } */
   
 
   .split-modal {
@@ -343,6 +340,7 @@ tr.editing {
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 999;
   }
   
   .split-modal-content {
@@ -363,8 +361,6 @@ tr.editing {
     margin-top: 5px;
   }
 
-
-  /* General Styling for the Edit Form */
 .edit-production-form {
     width: 100%;
     max-width: 600px;
@@ -374,16 +370,14 @@ tr.editing {
     border-radius: 8px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
-  
-  /* Title for the Edit Form */
+
   .edit-production-form h2 {
     font-size: 24px;
     text-align: center;
     margin-bottom: 20px;
     color: #333;
   }
-  
-  /* Styling for Form Labels */
+
   .edit-production-form label {
     display: block;
     font-size: 16px;
@@ -391,8 +385,7 @@ tr.editing {
     margin-bottom: 8px;
     color: #555;
   }
-  
-  /* Input Fields Styling */
+
   .edit-production-form input,
   .edit-production-form select,
   .edit-production-form textarea {
@@ -406,16 +399,14 @@ tr.editing {
     background-color: #fff;
     transition: border-color 0.3s ease;
   }
-  
-  /* Focus Effect for Input Fields */
+
   .edit-production-form input:focus,
   .edit-production-form select:focus,
   .edit-production-form textarea:focus {
     border-color: #4caf50;
     outline: none;
   }
-  
-  /* Submit Button Styling */
+
   .edit-production-form button {
     background-color: #4caf50;
     color: white;
@@ -426,27 +417,23 @@ tr.editing {
     cursor: pointer;
     transition: background-color 0.3s ease;
   }
-  
-  /* Button Hover Effect */
+
   .edit-production-form button:hover {
     background-color: #45a049;
   }
-  
-  /* Error Message Styling */
+
   .edit-production-form .error {
     color: red;
     font-size: 14px;
     margin-bottom: 15px;
   }
   
-  /* Success Message Styling */
   .edit-production-form .success {
     color: green;
     font-size: 14px;
     margin-bottom: 15px;
   }
   
-  /* Responsive Design */
   @media (max-width: 600px) {
     .edit-production-form {
       padding: 15px;
@@ -470,5 +457,63 @@ tr.editing {
       font-size: 14px;
       padding: 8px 15px;
     }
+  }
+  
+
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .btn-save {
+    background-color: #4caf50;
+    color: white;
+  }
+  
+  .btn-cancel {
+    background-color: #f44336;
+    color: white;
+  }
+  
+  .btn-edit {
+    /* background-color: #ffc107; */
+    color: white;
+  }
+  
+  .btn-delete {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .btn-split {
+    /* background-color: #17a2b8; */
+    color: white;
+  }
+  
+  .btn:hover {
+    opacity: 0.9;
+  }
+  
+  .btn svg {
+    margin-right: 5px;
+  }
+
+
+  .status-can-be-filled {
+    background-color: #d4edda; 
+    color: #155724;           
+  }
+  
+  .status-cannot-be-filled {
+    background-color: #f8d7da;
+    color: #721c24;
   }
   

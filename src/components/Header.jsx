@@ -25,7 +25,7 @@ function Header()
                 <button onClick={handleAddVolume}><WaterDropIcon/>Add Volume</button>
                 <button onClick={handleAddOrder}><ListAltIcon/>Add New Order</button>
             </div>
-            <h1>Uravu Order Manager</h1>
+            <h1>Production Order Manager</h1>
         </header>
     )
 }

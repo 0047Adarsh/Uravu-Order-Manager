@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import '../styles/DisplayOrders.css';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const ProductionOrders = () => {
   const [productionData, setProductionData] = useState([]);
@@ -272,10 +277,25 @@ const ProductionOrders = () => {
     }
   };
 
-  const calculateOrderStatus = (order, remainingVolume) => {
-    console.log(`Order Quantity: ${order.quantity}, Remaining Volume: ${remainingVolume}`);
-    return order.quantity <= remainingVolume ? 'Can be filled' : 'Cannot be filled';
+//   const calculateOrderStatus = (order, remainingVolume) => {
+//     console.log(`Order Quantity: ${order.quantity}, Remaining Volume: ${remainingVolume}`);
+//     return order.quantity <= remainingVolume ? 'Can be filled' : 'Cannot be filled';
+//   };
+
+
+const calculateOrderStatus = (order, remainingVol) => {
+    const orderVolume = Number(order.total_volume);
+    const remainingVolu = Number(remainingVol);
+  
+    if (isNaN(orderVolume) || isNaN(remainingVolu)) {
+      console.error('Invalid order quantity or remaining volume:', order, remainingVolu);
+      return 'Invalid data';
+    }
+  
+    return orderVolume <= remainingVol ? 'Can be filled' : 'Cannot be filled';
+   
   };
+
 
   return (
     <div className="container">
@@ -306,7 +326,7 @@ const ProductionOrders = () => {
               Split
             </button>
             <button onClick={() => setSplittingOrderId(null)} className="btn btn-cancel">
-              Cancel
+              <CancelIcon/>Cancel
             </button>
           </div>
         </div>
@@ -315,25 +335,25 @@ const ProductionOrders = () => {
       {productionData.map((data) => {
         const { data: orders } = ordersByDate[data.production_date] || { data: [] };
 
-        // Ensure production_volume is a valid number
+
         let productionVolume = Number(data.production_volume);
         if (isNaN(productionVolume)) {
           console.error(`Invalid production volume for date ${data.production_date}:`, data.production_volume);
-          productionVolume = 0; // Default to 0 if not a valid number
+          productionVolume = 0;
         }
 
-        // Calculate total volume of orders for the current production date
+
         const totalOrdersVolume = orders.reduce((total, order) => {
           const orderTotalVolume = Number(order.total_volume);
           if (isNaN(orderTotalVolume)) {
             console.error(`Invalid total volume for order ID ${order.id}:`, order.total_volume);
-            return total; // Skip invalid total volumes
+            return total;
           }
           return total + orderTotalVolume;
         }, 0);
 
-        // Update remaining volume
-        let remainingVolume = Math.max(0, productionVolume - totalOrdersVolume); // Ensure it doesn't go negative
+        let remainingVolume = Math.max(0, productionVolume - totalOrdersVolume);
+        let remVolume = productionVolume;
         console.log(`Production Volume: ${productionVolume}, Total Orders Volume: ${totalOrdersVolume}, Remaining Volume: ${remainingVolume}`);
 
         return (
@@ -346,18 +366,18 @@ const ProductionOrders = () => {
               {editingProductionId === data.id ? (
                 <>
                   <button onClick={handleSaveProduction} className="btn btn-save">
-                    Save Production
+                    <SaveIcon/>Save Production
                   </button>
                   <button onClick={handleCancelProductionEdit} className="btn btn-cancel">
-                    Cancel
+                    <CancelIcon/>Cancel
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit">
+                  <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit"><EditIcon/>
                     Edit Production
                   </button>
-                  <button onClick={() => handleDeleteProduction(data.id)} className="btn btn-delete">
+                  <button onClick={() => handleDeleteProduction(data.id)} className="btn btn-delete"><DeleteIcon/>
                     Delete Production
                   </button>
                 </>
@@ -376,7 +396,7 @@ const ProductionOrders = () => {
                 </div>
               )}
             </div>
-
+            
             <h3>Orders:</h3>
             <div className="table-container">
               <table className="order-table">
@@ -386,20 +406,34 @@ const ProductionOrders = () => {
                     <th>Customer</th>
                     <th>Volume</th>
                     <th>Quantity</th>
+                    <th>Cap Color</th>
                     <th>Total Volume</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
+
                 {
                     orders && orders.length > 0 ? ( 
                     orders.map((order, index) => {
                       const isEditing = editingOrderId === order.id;
-                      const orderStatus = calculateOrderStatus(order, remainingVolume); // Determine order status
+                      
+                    //   let remainingVol = data.production_volume;
+        
+                      const orderStatus = calculateOrderStatus(order, remVolume);
+                      if(orderStatus=='Can be filled')
+                      {
+                        remVolume-=order.total_volume;
+                      }
+                      const statusClass = orderStatus === 'Can be filled'
+                    ? 'status-can-be-filled'
+                    : 'status-cannot-be-filled';
+                    //   remainingVol = orderStatus ? remainingVol - order.total_volume : remainingVol;
+
 
                       return (
-                        <tr key={order.id} className={isEditing ? 'editing' : ''}>
+                        <tr key={order.id} className={statusClass} id='editing'>
                           <td>{index + 1}</td>
                           <td>
                             {isEditing ? (
@@ -446,6 +480,7 @@ const ProductionOrders = () => {
                               order.quantity
                             )}
                           </td>
+                          <td>{order.cap_color}</td>
                           <td>
                             {isEditing ? (
                               <input
@@ -463,21 +498,21 @@ const ProductionOrders = () => {
                             {isEditing ? (
                               <>
                                 <button onClick={() => handleSave(order.id)} className="btn btn-save">
-                                  Save
+                                  <SaveIcon/>Save
                                 </button>
                                 <button onClick={handleCancel} className="btn btn-cancel">
-                                  Cancel
+                                  <CancelIcon/>Cancel
                                 </button>
                               </>
                             ) : (
                               <>
-                                <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit">
+                                <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit"><EditIcon/>
                                   Edit
                                 </button>
-                                <button onClick={() => handleDelete(order.id)} className="btn btn-delete">
+                                <button onClick={() => handleDelete(order.id)} className="btn btn-delete"><DeleteIcon/>
                                   Delete
                                 </button>
-                                <button onClick={() => handleSplit(order.id)} className="btn btn-split">
+                                <button onClick={() => handleSplit(order.id)} className="btn btn-split"><AltRouteIcon/>
                                   Split
                                 </button>
                               </>
@@ -495,7 +530,6 @@ const ProductionOrders = () => {
               </table>
             </div>
 
-            {/* Display remaining volume */}
             <div className="remaining-volume">
               <h4>Remaining Volume: {remainingVolume} Lts</h4>
             </div>
