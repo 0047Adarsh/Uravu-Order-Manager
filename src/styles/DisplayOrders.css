@@ -517,3 +517,22 @@ button:hover {
     color: #721c24;
   }
   
+  /* Add smooth transitions for dragging */
+.draggable-item {
+  transition: background-color 0.2s ease;
+}
+
+/* Style for the item being dragged */
+.draggable-item.dragging {
+  background-color: #f0f0f0;
+  border: 1px dashed #ccc;
+}
+
+/* Style for the drop placeholder */
+.droppable-area {
+  transition: background-color 0.2s ease;
+}
+
+.droppable-area.dragging-over {
+  background-color: #e0f7fa;
+}

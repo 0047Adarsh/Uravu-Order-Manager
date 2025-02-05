@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import moment from 'moment';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import '../styles/DisplayOrders.css';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -23,20 +24,25 @@ const ProductionOrders = () => {
   const customers = ['Customer A', 'Customer B', 'Customer C'];
   const volumes = [100, 200, 300, 400];
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    axios
-      .get('http://localhost:3000/productiondata')
-      .then((response) => {
+    const fetchProductionData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/productiondata');
         const sortedData = response.data.data.sort((a, b) =>
           moment(b.production_date).isBefore(moment(a.production_date)) ? 1 : -1
         );
         setProductionData(sortedData);
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error fetching production data:', error);
+        setError('Failed to load production data. Please try again.');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProductionData();
   }, []);
 
   const getOrdersForDate = (productionDate) => {
@@ -277,13 +283,7 @@ const ProductionOrders = () => {
     }
   };
 
-//   const calculateOrderStatus = (order, remainingVolume) => {
-//     console.log(`Order Quantity: ${order.quantity}, Remaining Volume: ${remainingVolume}`);
-//     return order.quantity <= remainingVolume ? 'Can be filled' : 'Cannot be filled';
-//   };
-
-
-const calculateOrderStatus = (order, remainingVol) => {
+  const calculateOrderStatus = (order, remainingVol) => {
     const orderVolume = Number(order.total_volume);
     const remainingVolu = Number(remainingVol);
   
@@ -296,247 +296,296 @@ const calculateOrderStatus = (order, remainingVol) => {
    
   };
 
+  const onDragEnd = (result) => {
+    const { source, destination } = result;
+
+    if (!destination) return;
+
+    const sourceDate = source.droppableId;
+    const destDate = destination.droppableId;
+
+    if (sourceDate === destDate) {
+      const orders = [...ordersByDate[sourceDate].data];
+      const [removed] = orders.splice(source.index, 1);
+      orders.splice(destination.index, 0, removed);
+
+      setOrdersByDate((prevOrders) => ({
+        ...prevOrders,
+        [sourceDate]: {
+          ...prevOrders[sourceDate],
+          data: orders,
+        },
+      }));
+    } else {
+      const sourceOrders = [...ordersByDate[sourceDate].data];
+      const destOrders = [...ordersByDate[destDate].data];
+      const [removed] = sourceOrders.splice(source.index, 1);
+      destOrders.splice(destination.index, 0, removed);
+
+      setOrdersByDate((prevOrders) => ({
+        ...prevOrders,
+        [sourceDate]: {
+          ...prevOrders[sourceDate],
+          data: sourceOrders,
+        },
+        [destDate]: {
+          ...prevOrders[destDate],
+          data: destOrders,
+        },
+      }));
+    }
+  };
 
   return (
-    <div className="container">
-      <h1>Production Volume and Orders</h1>
+    <DragDropContext onDragEnd={onDragEnd}>
+      <div className="container">
+        <h1>Production Volume and Orders</h1>
+        {loading && <div className="loading-spinner">Loading...</div>}
+        {error && <div className="error-message">{error}</div>}
 
-      {splittingOrderId && (
-        <div className="split-modal">
-          <div className="split-modal-content">
-            <h3>Split Order</h3>
-           <label>Customer Name:</label>
-            <label>
-              Quantity to Split:
-              <input
-                type="number"
-                value={splitQuantity}
-                onChange={(e) => setSplitQuantity(Number(e.target.value))}
-              />
-            </label>
-            <label>
-              New Production Date:
-              <input
-                type="date"
-                value={splitDate}
-                onChange={(e) => setSplitDate(e.target.value)}
-              />
-            </label>
-            <button onClick={handleSplitSubmit} className="btn btn-save">
-              Split
-            </button>
-            <button onClick={() => setSplittingOrderId(null)} className="btn btn-cancel">
-              <CancelIcon/>Cancel
-            </button>
+        {splittingOrderId && (
+          <div className="split-modal">
+            <div className="split-modal-content">
+              <h3>Split Order</h3>
+             <label>Customer Name:</label>
+              <label>
+                Quantity to Split:
+                <input
+                  type="number"
+                  value={splitQuantity}
+                  onChange={(e) => setSplitQuantity(Number(e.target.value))}
+                />
+              </label>
+              <label>
+                New Production Date:
+                <input
+                  type="date"
+                  value={splitDate}
+                  onChange={(e) => setSplitDate(e.target.value)}
+                />
+              </label>
+              <button onClick={handleSplitSubmit} className="btn btn-save">
+                Split
+              </button>
+              <button onClick={() => setSplittingOrderId(null)} className="btn btn-cancel">
+                <CancelIcon/>Cancel
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {productionData.map((data) => {
-        const { data: orders } = ordersByDate[data.production_date] || { data: [] };
+        {productionData.map((data) => {
+          const { data: orders } = ordersByDate[data.production_date] || { data: [] };
 
-
-        let productionVolume = Number(data.production_volume);
-        if (isNaN(productionVolume)) {
-          console.error(`Invalid production volume for date ${data.production_date}:`, data.production_volume);
-          productionVolume = 0;
-        }
-
-
-        const totalOrdersVolume = orders.reduce((total, order) => {
-          const orderTotalVolume = Number(order.total_volume);
-          if (isNaN(orderTotalVolume)) {
-            console.error(`Invalid total volume for order ID ${order.id}:`, order.total_volume);
-            return total;
+          let productionVolume = Number(data.production_volume);
+          if (isNaN(productionVolume)) {
+            console.error(`Invalid production volume for date ${data.production_date}:`, data.production_volume);
+            productionVolume = 0;
           }
-          return total + orderTotalVolume;
-        }, 0);
 
-        let remainingVolume = Math.max(0, productionVolume - totalOrdersVolume);
-        let remVolume = productionVolume;
-        console.log(`Production Volume: ${productionVolume}, Total Orders Volume: ${totalOrdersVolume}, Remaining Volume: ${remainingVolume}`);
+          const totalOrdersVolume = orders.reduce((total, order) => {
+            const orderTotalVolume = Number(order.total_volume);
+            if (isNaN(orderTotalVolume)) {
+              console.error(`Invalid total volume for order ID ${order.id}:`, order.total_volume);
+              return total;
+            }
+            return total + orderTotalVolume;
+          }, 0);
 
-        return (
-          <div key={data.production_date} className="production-card">
-            <div className="card-header">
-              <h2>
-                Production Date: {moment(data.production_date).format('YYYY-MM-DD')} | Production
-                Volume: {data.production_volume} Lts
-              </h2>
-              {editingProductionId === data.id ? (
-                <>
-                  <button onClick={handleSaveProduction} className="btn btn-save">
-                    <SaveIcon/>Save Production
-                  </button>
-                  <button onClick={handleCancelProductionEdit} className="btn btn-cancel">
-                    <CancelIcon/>Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit"><EditIcon/>
-                    Edit Production
-                  </button>
-                  <button onClick={() => handleDeleteProduction(data.id)} className="btn btn-delete"><DeleteIcon/>
-                    Delete Production
-                  </button>
-                </>
-              )}
-            </div>
+          let remainingVolume = Math.max(0, productionVolume - totalOrdersVolume);
+          let remVolume = productionVolume;
+          console.log(`Production Volume: ${productionVolume}, Total Orders Volume: ${totalOrdersVolume}, Remaining Volume: ${remainingVolume}`);
 
-            <div className="edit-production-form">
-              {editingProductionId === data.id && (
-                <div>
-                  <label>Production Volume (L):</label>
-                  <input
-                    type="number"
-                    value={editedProductionData.production_volume || ''}
-                    onChange={(e) => handleChangeProduction(e, 'production_volume')}
-                  />
-                </div>
-              )}
-            </div>
-            
-            <h3>Orders:</h3>
-            <div className="table-container">
-              <table className="order-table">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Volume</th>
-                    <th>Quantity</th>
-                    <th>Cap Color</th>
-                    <th>Total Volume</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
+          return (
+            <div key={data.production_date} className="production-card">
+              <div className="card-header">
+                <h2>
+                  Production Date: {moment(data.production_date).format('YYYY-MM-DD')} | Production
+                  Volume: {data.production_volume} Lts
+                </h2>
+                {editingProductionId === data.id ? (
+                  <>
+                    <button onClick={handleSaveProduction} className="btn btn-save">
+                      <SaveIcon/>Save Production
+                    </button>
+                    <button onClick={handleCancelProductionEdit} className="btn btn-cancel">
+                      <CancelIcon/>Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit"><EditIcon/>
+                      Edit Production
+                    </button>
+                    <button onClick={() => handleDeleteProduction(data.id)} className="btn btn-delete"><DeleteIcon/>
+                      Delete Production
+                    </button>
+                  </>
+                )}
+              </div>
 
-                {
-                    orders && orders.length > 0 ? ( 
-                    orders.map((order, index) => {
-                      const isEditing = editingOrderId === order.id;
-                      
-                    //   let remainingVol = data.production_volume;
-        
-                      const orderStatus = calculateOrderStatus(order, remVolume);
-                      if(orderStatus=='Can be filled')
-                      {
-                        remVolume-=order.total_volume;
-                      }
-                      const statusClass = orderStatus === 'Can be filled'
-                    ? 'status-can-be-filled'
-                    : 'status-cannot-be-filled';
-                    //   remainingVol = orderStatus ? remainingVol - order.total_volume : remainingVol;
-
-
-                      return (
-                        <tr key={order.id} className={statusClass} id='editing'>
-                          <td>{index + 1}</td>
-                          <td>
-                            {isEditing ? (
-                              <select
-                                value={editedOrderData.customer_name || ''}
-                                onChange={(e) => handleChange(e, 'customer_name')}
-                              >
-                                <option value="">Select Customer</option>
-                                {customers.map((customer, idx) => (
-                                  <option key={idx} value={customer}>
-                                    {customer}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              order.customer_name
-                            )}
-                          </td>
-                          <td>
-                            {isEditing ? (
-                              <select
-                                value={editedOrderData.volume || ''}
-                                onChange={(e) => handleChange(e, 'volume')}
-                              >
-                                <option value="">Select Volume</option>
-                                {volumes.map((volume, idx) => (
-                                  <option key={idx} value={volume}>
-                                    {volume} L
-                                  </option>
-                                ))}
-                              </select>
-                            ) : (
-                              order.volume * 1000
-                            )}
-                          </td>
-                          <td>
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                value={editedOrderData.quantity || ''}
-                                onChange={(e) => handleChange(e, 'quantity')}
-                              />
-                            ) : (
-                              order.quantity
-                            )}
-                          </td>
-                          <td>{order.cap_color}</td>
-                          <td>
-                            {isEditing ? (
-                              <input
-                                type="number"
-                                value={editedOrderData.total_volume || ''}
-                                onChange={(e) => handleChange(e, 'total_volume')}
-                                readOnly
-                              />
-                            ) : (
-                              order.total_volume
-                            )}
-                          </td>
-                          <td>{orderStatus}</td>
-                          <td>
-                            {isEditing ? (
-                              <>
-                                <button onClick={() => handleSave(order.id)} className="btn btn-save">
-                                  <SaveIcon/>Save
-                                </button>
-                                <button onClick={handleCancel} className="btn btn-cancel">
-                                  <CancelIcon/>Cancel
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit"><EditIcon/>
-                                  Edit
-                                </button>
-                                <button onClick={() => handleDelete(order.id)} className="btn btn-delete"><DeleteIcon/>
-                                  Delete
-                                </button>
-                                <button onClick={() => handleSplit(order.id)} className="btn btn-split"><AltRouteIcon/>
-                                  Split
-                                </button>
-                              </>
-                            )}
-                          </td>
+              <div className="edit-production-form">
+                {editingProductionId === data.id && (
+                  <div>
+                    <label>Production Volume (L):</label>
+                    <input
+                      type="number"
+                      value={editedProductionData.production_volume || ''}
+                      onChange={(e) => handleChangeProduction(e, 'production_volume')}
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <h3>Orders:</h3>
+              <div className="table-container">
+                <Droppable droppableId={data.production_date}>
+                  {(provided) => (
+                    <table className="order-table" ref={provided.innerRef} {...provided.droppableProps}>
+                      <thead>
+                        <tr>
+                          <th>Order #</th>
+                          <th>Customer</th>
+                          <th>Volume</th>
+                          <th>Quantity</th>
+                          <th>Cap Color</th>
+                          <th>Total Volume</th>
+                          <th>Status</th>
+                          <th>Actions</th>
                         </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan="7">No orders for this date</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                      </thead>
+                      <tbody>
+                        {orders && orders.length > 0 ? ( 
+                          orders.map((order, index) => {
+                            const isEditing = editingOrderId === order.id;
+                            
+                            const orderStatus = calculateOrderStatus(order, remVolume);
+                            if(orderStatus=='Can be filled')
+                            {
+                              remVolume-=order.total_volume;
+                            }
+                            const statusClass = orderStatus === 'Can be filled'
+                          ? 'status-can-be-filled'
+                          : 'status-cannot-be-filled';
 
-            <div className="remaining-volume">
-              <h4>Remaining Volume: {remainingVolume} Lts</h4>
+                            return (
+                              <Draggable key={order.id} draggableId={order.id.toString()} index={index}>
+                                {(provided) => (
+                                  <tr 
+                                    ref={provided.innerRef} 
+                                    {...provided.draggableProps} 
+                                    {...provided.dragHandleProps}
+                                    className={statusClass} 
+                                    id='editing'
+                                  >
+                                    <td>{index + 1}</td>
+                                    <td>
+                                      {isEditing ? (
+                                        <select
+                                          value={editedOrderData.customer_name || ''}
+                                          onChange={(e) => handleChange(e, 'customer_name')}
+                                        >
+                                          <option value="">Select Customer</option>
+                                          {customers.map((customer, idx) => (
+                                            <option key={idx} value={customer}>
+                                              {customer}
+                                            </option>
+                                          ))}
+                                        </select>
+                                      ) : (
+                                        order.customer_name
+                                      )}
+                                    </td>
+                                    <td>
+                                      {isEditing ? (
+                                        <select
+                                          value={editedOrderData.volume || ''}
+                                          onChange={(e) => handleChange(e, 'volume')}
+                                        >
+                                          <option value="">Select Volume</option>
+                                          {volumes.map((volume, idx) => (
+                                            <option key={idx} value={volume}>
+                                              {volume} L
+                                            </option>
+                                          ))}
+                                        </select>
+                                      ) : (
+                                        order.volume * 1000
+                                      )}
+                                    </td>
+                                    <td>
+                                      {isEditing ? (
+                                        <input
+                                          type="number"
+                                          value={editedOrderData.quantity || ''}
+                                          onChange={(e) => handleChange(e, 'quantity')}
+                                        />
+                                      ) : (
+                                        order.quantity
+                                      )}
+                                    </td>
+                                    <td>{order.cap_color}</td>
+                                    <td>
+                                      {isEditing ? (
+                                        <input
+                                          type="number"
+                                          value={editedOrderData.total_volume || ''}
+                                          onChange={(e) => handleChange(e, 'total_volume')}
+                                          readOnly
+                                        />
+                                      ) : (
+                                        order.total_volume
+                                      )}
+                                    </td>
+                                    <td>{orderStatus}</td>
+                                    <td>
+                                      {isEditing ? (
+                                        <>
+                                          <button onClick={() => handleSave(order.id)} className="btn btn-save">
+                                            <SaveIcon/>Save
+                                          </button>
+                                          <button onClick={handleCancel} className="btn btn-cancel">
+                                            <CancelIcon/>Cancel
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit"><EditIcon/>
+                                            Edit
+                                          </button>
+                                          <button onClick={() => handleDelete(order.id)} className="btn btn-delete"><DeleteIcon/>
+                                            Delete
+                                          </button>
+                                          <button onClick={() => handleSplit(order.id)} className="btn btn-split"><AltRouteIcon/>
+                                            Split
+                                          </button>
+                                        </>
+                                      )}
+                                    </td>
+                                  </tr>
+                                )}
+                              </Draggable>
+                            );
+                          })
+                        ) : (
+                          <tr>
+                            <td colSpan="7">No orders for this date</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  )}
+                </Droppable>
+              </div>
+
+              <div className="remaining-volume">
+                <h4>Remaining Volume: {remainingVolume} Lts</h4>
+              </div>
             </div>
-          </div>
-        );
-      })}
-    </div>
+          );
+        })}
+      </div>
+    </DragDropContext>
   );
 };
 

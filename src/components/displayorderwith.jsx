@@ -2,6 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import moment from 'moment';
 import '../styles/DisplayOrders.css';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+import AltRouteIcon from '@mui/icons-material/AltRoute';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const ProductionOrders = () => {
   const [productionData, setProductionData] = useState([]);
@@ -18,20 +23,25 @@ const ProductionOrders = () => {
   const customers = ['Customer A', 'Customer B', 'Customer C'];
   const volumes = [100, 200, 300, 400];
 
+  const [error, setError] = useState(null);
+
   useEffect(() => {
-    axios
-      .get('http://localhost:3000/productiondata')
-      .then((response) => {
+    const fetchProductionData = async () => {
+      try {
+        const response = await axios.get('http://localhost:3000/productiondata');
         const sortedData = response.data.data.sort((a, b) =>
           moment(b.production_date).isBefore(moment(a.production_date)) ? 1 : -1
         );
         setProductionData(sortedData);
-        setLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error fetching production data:', error);
+        setError('Failed to load production data. Please try again.');
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchProductionData();
   }, []);
 
   const getOrdersForDate = (productionDate) => {
@@ -257,24 +267,39 @@ const ProductionOrders = () => {
     setEditedProductionData((prevData) => ({ ...prevData, [field]: value }));
   };
 
-  const checkOrderFulfillment = (productionVolume, orders) => {
-    let remainingVolume = productionVolume;
-    return orders.map((order) => {
-      const canBeFilled = remainingVolume >= order.total_volume;
-      if (canBeFilled) {
-        remainingVolume -= order.total_volume;
+  const handleDeleteProduction = async (productionId) => {
+    try {
+      const response = await axios.delete(`http://localhost:3000/productiondata/${productionId}`);
+
+      if (response.status === 200) {
+        alert(`Production data ${productionId} deleted successfully`);
+
+        setProductionData((prevData) => prevData.filter((data) => data.id !== productionId));
       }
-      return {
-        ...order,
-        status: canBeFilled ? 'Can be filled' : 'Cannot be filled',
-        rowColor: canBeFilled ? 'green' : 'red',
-      };
-    });
+    } catch (error) {
+      console.error(`Error deleting production data ${productionId}:`, error);
+      alert('Failed to delete the production data. Please try again.');
+    }
+  };
+
+  const calculateOrderStatus = (order, remainingVol) => {
+    const orderVolume = Number(order.total_volume);
+    const remainingVolu = Number(remainingVol);
+  
+    if (isNaN(orderVolume) || isNaN(remainingVolu)) {
+      console.error('Invalid order quantity or remaining volume:', order, remainingVolu);
+      return 'Invalid data';
+    }
+  
+    return orderVolume <= remainingVol ? 'Can be filled' : 'Cannot be filled';
+   
   };
 
   return (
     <div className="container">
       <h1>Production Volume and Orders</h1>
+      {loading && <div className="loading-spinner">Loading...</div>}
+      {error && <div className="error-message">{error}</div>}
 
       {splittingOrderId && (
         <div className="split-modal">
@@ -301,7 +326,7 @@ const ProductionOrders = () => {
               Split
             </button>
             <button onClick={() => setSplittingOrderId(null)} className="btn btn-cancel">
-              Cancel
+              <CancelIcon/>Cancel
             </button>
           </div>
         </div>
@@ -309,7 +334,25 @@ const ProductionOrders = () => {
 
       {productionData.map((data) => {
         const { data: orders } = ordersByDate[data.production_date] || { data: [] };
-        const checkedOrders = checkOrderFulfillment(data.production_volume, orders);
+
+        let productionVolume = Number(data.production_volume);
+        if (isNaN(productionVolume)) {
+          console.error(`Invalid production volume for date ${data.production_date}:`, data.production_volume);
+          productionVolume = 0;
+        }
+
+        const totalOrdersVolume = orders.reduce((total, order) => {
+          const orderTotalVolume = Number(order.total_volume);
+          if (isNaN(orderTotalVolume)) {
+            console.error(`Invalid total volume for order ID ${order.id}:`, order.total_volume);
+            return total;
+          }
+          return total + orderTotalVolume;
+        }, 0);
+
+        let remainingVolume = Math.max(0, productionVolume - totalOrdersVolume);
+        let remVolume = productionVolume;
+        console.log(`Production Volume: ${productionVolume}, Total Orders Volume: ${totalOrdersVolume}, Remaining Volume: ${remainingVolume}`);
 
         return (
           <div key={data.production_date} className="production-card">
@@ -321,16 +364,21 @@ const ProductionOrders = () => {
               {editingProductionId === data.id ? (
                 <>
                   <button onClick={handleSaveProduction} className="btn btn-save">
-                    Save Production
+                    <SaveIcon/>Save Production
                   </button>
                   <button onClick={handleCancelProductionEdit} className="btn btn-cancel">
-                    Cancel
+                    <CancelIcon/>Cancel
                   </button>
                 </>
               ) : (
-                <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit">
-                  Edit Production
-                </button>
+                <>
+                  <button onClick={() => handleEditProduction(data.id, data)} className="btn btn-edit"><EditIcon/>
+                    Edit Production
+                  </button>
+                  <button onClick={() => handleDeleteProduction(data.id)} className="btn btn-delete"><DeleteIcon/>
+                    Delete Production
+                  </button>
+                </>
               )}
             </div>
 
@@ -346,7 +394,7 @@ const ProductionOrders = () => {
                 </div>
               )}
             </div>
-
+            
             <h3>Orders:</h3>
             <div className="table-container">
               <table className="order-table">
@@ -356,20 +404,28 @@ const ProductionOrders = () => {
                     <th>Customer</th>
                     <th>Volume</th>
                     <th>Quantity</th>
+                    <th>Cap Color</th>
                     <th>Total Volume</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                {
-                    checkedOrders && checkedOrders.length > 0 ? ( 
-                    checkedOrders.map((order, index) => {
-                    const isEditing = editingOrderId === order.id;
-                    
+                  {orders && orders.length > 0 ? ( 
+                    orders.map((order, index) => {
+                      const isEditing = editingOrderId === order.id;
+                      
+                      const orderStatus = calculateOrderStatus(order, remVolume);
+                      if(orderStatus=='Can be filled')
+                      {
+                        remVolume-=order.total_volume;
+                      }
+                      const statusClass = orderStatus === 'Can be filled'
+                    ? 'status-can-be-filled'
+                    : 'status-cannot-be-filled';
 
                       return (
-                        <tr key={order.id} className={isEditing ? 'editing' : ''} style={{ backgroundColor: order.rowColor }}>
+                        <tr key={order.id} className={statusClass} id='editing'>
                           <td>{index + 1}</td>
                           <td>
                             {isEditing ? (
@@ -416,6 +472,7 @@ const ProductionOrders = () => {
                               order.quantity
                             )}
                           </td>
+                          <td>{order.cap_color}</td>
                           <td>
                             {isEditing ? (
                               <input
@@ -428,27 +485,26 @@ const ProductionOrders = () => {
                               order.total_volume
                             )}
                           </td>
-                
-                          <td>{order.status}</td>
+                          <td>{orderStatus}</td>
                           <td>
                             {isEditing ? (
                               <>
                                 <button onClick={() => handleSave(order.id)} className="btn btn-save">
-                                  Save
+                                  <SaveIcon/>Save
                                 </button>
                                 <button onClick={handleCancel} className="btn btn-cancel">
-                                  Cancel
+                                  <CancelIcon/>Cancel
                                 </button>
                               </>
                             ) : (
                               <>
-                                <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit">
+                                <button onClick={() => handleEdit(order.id, order)} className="btn btn-edit"><EditIcon/>
                                   Edit
                                 </button>
-                                <button onClick={() => handleDelete(order.id)} className="btn btn-delete">
+                                <button onClick={() => handleDelete(order.id)} className="btn btn-delete"><DeleteIcon/>
                                   Delete
                                 </button>
-                                <button onClick={() => handleSplit(order.id)} className="btn btn-split">
+                                <button onClick={() => handleSplit(order.id)} className="btn btn-split"><AltRouteIcon/>
                                   Split
                                 </button>
                               </>
@@ -464,6 +520,10 @@ const ProductionOrders = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            <div className="remaining-volume">
+              <h4>Remaining Volume: {remainingVolume} Lts</h4>
             </div>
           </div>
         );
